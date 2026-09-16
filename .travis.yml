@@ -19,6 +19,11 @@ install:
   - cp grunt/npm-shrinkwrap.json ./
   - npm install -g grunt-cli
   - npm install
+script:
+  # Each matrix job runs its TWBS_TEST subset of `grunt test` (see Gruntfile.js):
+  # core = lint + QUnit unit tests + dist build + docs; validate-html = Jekyll
+  # HTML validation; sauce-js-unit = cross-browser QUnit via Sauce Labs.
+  - npm test
 cache:
   directories:
     - node_modules
