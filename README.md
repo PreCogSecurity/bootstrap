@@ -94,6 +94,65 @@ Documentation for v2.3.2 has been made available for the time being at <http://g
 [Previous releases](https://github.com/twbs/bootstrap/releases) and their documentation are also available for download.
 
 
+## Development
+
+This is a frozen snapshot of Bootstrap v3.3.6, so the toolchain is intentionally
+pinned to the era it was built with. The JavaScript test suite runs on
+[PhantomJS](http://phantomjs.org) via Grunt 0.4.x, which requires Node.js 6
+(see `.nvmrc`); newer Node runtimes are not supported by the legacy build
+dependencies.
+
+### Prerequisites
+
+* [Node.js 6](https://nodejs.org/en/download/releases/) (the `.nvmrc` file
+  documents this; `nvm install && nvm use` will set it up).
+* Ruby 2.2 and [Bundler](http://bundler.io) — only needed for the Jekyll-based
+  docs and the `validate-html` part of the test suite.
+
+### Install
+
+```sh
+npm install
+```
+
+### Test
+
+Run the full test suite (lint, QUnit unit tests, dist build, docs):
+
+```sh
+npm test
+```
+
+To run only the Node-based subset (lint, QUnit unit tests, dist build, docs
+assets) — the same subset CI runs — set `TWBS_TEST=core`:
+
+```sh
+TWBS_TEST=core npm test
+```
+
+The QUnit suite lives in `js/tests/` and is driven by `js/tests/index.html`.
+Running the tests also produces an [istanbul](https://istanbul.js.org) coverage
+report in `coverage/` (HTML report plus `coverage-summary.json`). The build
+fails if coverage drops below the thresholds configured in `Gruntfile.js`.
+
+### Lint
+
+JavaScript is checked with [JSHint](http://jshint.com) and
+[JSCS](http://jscs.info) using the configs in `js/` and `grunt/`:
+
+```sh
+npm run lint
+```
+
+### Dependency audit
+
+This snapshot's devDependencies are from 2016 and contain known
+vulnerabilities (mostly in the legacy Grunt/PhantomJS toolchain). CI runs
+`npm audit` on every push so the baseline stays visible, but the audit is
+informational only and does not gate the build — upgrading the toolchain would
+require a full migration off the 2016-era build system.
+
+
 ## Contributing
 
 Please read through our [contributing guidelines](https://github.com/twbs/bootstrap/blob/master/CONTRIBUTING.md). Included are directions for opening issues, coding standards, and notes on development.

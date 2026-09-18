@@ -147,7 +147,33 @@ module.exports = function (grunt) {
 
     qunit: {
       options: {
-        inject: 'js/tests/unit/phantom.js'
+        inject: 'js/tests/unit/phantom.js',
+        coverage: {
+          disposeCollector: true,
+          // transition.js is intentionally excluded: it has no dedicated unit
+          // test file, so including it would skew the coverage thresholds.
+          src: [
+            'js/alert.js',
+            'js/button.js',
+            'js/carousel.js',
+            'js/collapse.js',
+            'js/dropdown.js',
+            'js/modal.js',
+            'js/scrollspy.js',
+            'js/tab.js',
+            'js/tooltip.js',
+            'js/popover.js',
+            'js/affix.js'
+          ],
+          instrumentedFiles: 'coverage/instrumented/',
+          htmlReport: 'coverage/html',
+          jsonSummaryReport: 'coverage/',
+          // Fail the build if coverage regresses below these thresholds.
+          linesThresholdPct: 85,
+          statementsThresholdPct: 85,
+          functionsThresholdPct: 85,
+          branchesThresholdPct: 70
+        }
       },
       files: 'js/tests/index.html'
     },
@@ -417,6 +443,10 @@ module.exports = function (grunt) {
 
   // These plugins provide necessary tasks.
   require('load-grunt-tasks')(grunt, { scope: 'devDependencies' });
+  // grunt-qunit-istanbul is a drop-in replacement for grunt-contrib-qunit that
+  // adds istanbul coverage. Load it after load-grunt-tasks so the
+  // coverage-capable `qunit` task wins regardless of plugin load order.
+  grunt.loadNpmTasks('grunt-qunit-istanbul');
   require('time-grunt')(grunt);
 
   // Docs HTML validation task
@@ -453,7 +483,8 @@ module.exports = function (grunt) {
     testSubtasks.push('saucelabs-qunit');
   }
   grunt.registerTask('test', testSubtasks);
-  grunt.registerTask('test-js', ['jshint:core', 'jshint:test', 'jshint:grunt', 'jscs:core', 'jscs:test', 'jscs:grunt', 'qunit']);
+  grunt.registerTask('lint', ['jshint:core', 'jshint:test', 'jshint:grunt', 'jscs:core', 'jscs:test', 'jscs:grunt']);
+  grunt.registerTask('test-js', ['lint', 'qunit']);
 
   // JS distribution task.
   grunt.registerTask('dist-js', ['concat', 'uglify:core', 'commonjs']);

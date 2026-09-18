@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  test:
+    name: Lint + unit tests + coverage
+    runs-on: ubuntu-latest
+    env:
+      # Run the Node-only subset of `grunt test` (lint, QUnit unit tests,
+      # dist build, docs assets). The full suite also includes a Jekyll HTML
+      # validation step that requires Ruby; see Gruntfile.js `test` task.
+      TWBS_TEST: core
+    steps:
+      - uses: actions/checkout@v4
+
+      # Node 6 is the last runtime the legacy PhantomJS-based QUnit runner
+      # supports cleanly (grunt 0.4.x / phantomjs 1.9.x era toolchain).
+      - name: Use Node.js 6
+        uses: actions/setup-node@v4
+        with:
+          node-version: 6
+
+      - name: Install dependencies
+        run: |
+          cp grunt/npm-shrinkwrap.json ./npm-shrinkwrap.json
+          npm install --no-audit --no-fund
+
+      - name: Run lint, unit tests, dist build and coverage
+        run: npm test
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+        if: always()
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 18
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: npm audit
+        # Informational only: this is a frozen 2016 snapshot whose
+        # devDependencies contain known vulnerabilities (npm audit reports
+        # ~95, mostly in the legacy grunt/phantomjs toolchain). The audit runs
+        # on every push so regressions stay visible, but it does not gate the
+        # build. See README.md "Dependency audit" for the baseline.
+        continue-on-error: true
+        run: npm audit --audit-level=high
