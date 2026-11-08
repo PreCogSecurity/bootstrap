@@ -6,10 +6,38 @@ on:
       - master
   pull_request:
 
+# Least privilege: CI only needs to read the repository.
+permissions:
+  contents: read
+
+# Cancel superseded runs on the same ref to save runner minutes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  syntax:
+    name: Syntax check (modern Node)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      # Dependency-free parse check. This runs on a supported Node LTS and
+      # catches syntax errors even if the legacy test toolchain cannot be
+      # installed, which is the first signal a fresh clone is checked with.
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Parse all JavaScript sources
+        run: npm run test:syntax
+
   test:
     name: Lint + unit tests + coverage
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     env:
       # Run the Node-only subset of `grunt test` (lint, QUnit unit tests,
       # dist build, docs assets). The full suite also includes a Jekyll HTML
@@ -20,6 +48,7 @@ jobs:
 
       # Node 6 is the last runtime the legacy PhantomJS-based QUnit runner
       # supports cleanly (grunt 0.4.x / phantomjs 1.9.x era toolchain).
+      # The migration off this toolchain is tracked in MODERNIZATION.md.
       - name: Use Node.js 6
         uses: actions/setup-node@v4
         with:
@@ -38,24 +67,31 @@ jobs:
         with:
           name: coverage-report
           path: coverage/
+          if-no-files-found: warn
         if: always()
 
   audit:
     name: Dependency audit
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
-      - name: Use Node.js 18
+      - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
 
-      - name: npm audit
-        # Informational only: this is a frozen 2016 snapshot whose
-        # devDependencies contain known vulnerabilities (npm audit reports
-        # ~95, mostly in the legacy grunt/phantomjs toolchain). The audit runs
-        # on every push so regressions stay visible, but it does not gate the
-        # build. See README.md "Dependency audit" for the baseline.
+      # Production/runtime dependencies must never carry a high-severity
+      # advisory. This check is blocking.
+      - name: Audit production dependencies (blocking)
+        run: npm audit --omit=dev --audit-level=high
+
+      # The frozen 2016 devDependency tree has a known advisory baseline
+      # (mostly grunt/phantomjs). Keep it visible on every push without
+      # blocking merges until the toolchain migration in MODERNIZATION.md
+      # lands; new *introduced* vulnerabilities are gated by the
+      # dependency-review workflow on pull requests.
+      - name: Audit dev toolchain (informational)
         continue-on-error: true
         run: npm audit --audit-level=high

@@ -14,20 +14,25 @@
   "homepage": "http://getbootstrap.com",
   "author": "Twitter, Inc.",
   "scripts": {
+    "build": "grunt dist",
     "change-version": "node grunt/change-version.js",
-    "shrinkwrap": "npm shrinkwrap --dev && mv ./npm-shrinkwrap.json ./grunt/npm-shrinkwrap.json",
+    "lint": "grunt lint",
+    "shrinkwrap": "npm shrinkwrap && node grunt/rename-shrinkwrap.js",
     "test": "grunt test",
-    "lint": "grunt lint"
+    "test:coverage": "grunt test-js",
+    "test:lint": "grunt lint",
+    "test:syntax": "node grunt/syntax-check.js",
+    "test:unit": "grunt qunit"
   },
   "style": "dist/css/bootstrap.css",
   "less": "less/bootstrap.less",
   "main": "./dist/js/npm",
   "repository": {
     "type": "git",
-    "url": "https://github.com/twbs/bootstrap.git"
+    "url": "https://github.com/PreCogSecurity/bootstrap.git"
   },
   "bugs": {
-    "url": "https://github.com/twbs/bootstrap/issues"
+    "url": "https://github.com/PreCogSecurity/bootstrap/issues"
   },
   "license": "MIT",
   "devDependencies": {
@@ -63,7 +68,7 @@
     "time-grunt": "^1.3.0"
   },
   "engines": {
-    "node": ">=0.10.1"
+    "node": ">=6 <7"
   },
   "files": [
     "dist",

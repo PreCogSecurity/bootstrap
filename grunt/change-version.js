@@ -75,6 +75,10 @@ function replaceRecursively(directory, excludedDirectories, allowedExtensions, o
   });
 }
 
+function isValidVersion(version) {
+  return /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/.test(version);
+}
+
 function main(args) {
   if (args.length !== 2) {
     console.error('USAGE: change-version old_version new_version');
@@ -83,6 +87,13 @@ function main(args) {
   }
   var oldVersion = args[0];
   var newVersion = args[1];
+  // The script rewrites version strings across the whole tree, so refuse
+  // anything that is not a strict semver to avoid accidental broad matches.
+  if (!isValidVersion(oldVersion) || !isValidVersion(newVersion)) {
+    console.error('Both versions must be valid semver (for example 3.3.6).');
+    console.error('Got arguments:', args);
+    process.exit(1);
+  }
   var EXCLUDED_DIRS = new Set([
     '.git',
     'node_modules',

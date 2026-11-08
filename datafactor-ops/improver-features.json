@@ -1,0 +1,70 @@
+{
+  "features": [
+    {
+      "id": "test-discoverability",
+      "status": "verified",
+      "test": "node -e \"JSON.parse(require('fs').readFileSync('package.json','utf8'))\"",
+      "note": "Added test:unit/test:coverage/test:lint/build scripts so the 209-test QUnit suite is discoverable; README documents them."
+    },
+    {
+      "id": "ci-hardening",
+      "status": "verified",
+      "test": "node -e \"require('js-yaml').load(require('fs').readFileSync('.github/workflows/ci.yml','utf8'))\"",
+      "note": "Least-privilege permissions, concurrency cancellation, job timeouts, blocking production audit gate."
+    },
+    {
+      "id": "dependency-governance",
+      "status": "verified",
+      "test": "node -e \"require('js-yaml').load(require('fs').readFileSync('.github/dependabot.yml','utf8'))\"",
+      "note": "Dependabot for npm/bundler/composer/actions, dependency-review gate, CodeQL security scanning."
+    },
+    {
+      "id": "reproducible-installs",
+      "status": "verified",
+      "test": "composer validate --no-check-publish",
+      "note": "Generated and committed composer.lock; documented shrinkwrap and package-lock install paths."
+    },
+    {
+      "id": "secret-hygiene",
+      "status": "verified",
+      "test": "file-removal + .gitignore review",
+      "note": "Removed stale .travis.yml (plaintext Slack token and encrypted secrets); ignored local env/credential and vendor paths."
+    },
+    {
+      "id": "security-docs",
+      "status": "verified",
+      "test": "grep -r SECURITY.md MODERNIZATION.md README.md",
+      "note": "Added SECURITY.md disclosure policy, MODERNIZATION.md migration plan, README Architecture and Security sections."
+    },
+    {
+      "id": "package-metadata",
+      "status": "verified",
+      "test": "jshint + jscs on grunt/rename-shrinkwrap.js and grunt/change-version.js",
+      "note": "Corrected engines range, fork repository/bugs URLs, cross-platform shrinkwrap helper, semver input validation."
+    },
+    {
+      "id": "syntax-gate",
+      "status": "verified",
+      "test": "npm run test:syntax",
+      "note": "Dependency-free node --check gate over js/, js/tests/unit/, and grunt; runs on modern Node in CI (exit 0 locally)."
+    },
+    {
+      "id": "security-input-validation",
+      "status": "verified",
+      "test": "node --check grunt/change-version.js",
+      "note": "change-version.js now rejects non-semver arguments before recursive rewrites; Jekyll docs server binds to loopback."
+    },
+    {
+      "id": "toolchain-migration",
+      "status": "blocked",
+      "test": "no-tests: Node 6 + PhantomJS unavailable in this environment",
+      "note": "Replacing the QUnit runner cannot be verified here and would risk the working suite; full plan in MODERNIZATION.md."
+    },
+    {
+      "id": "oversized-test-split",
+      "status": "blocked",
+      "test": "no-tests: QUnit suite cannot be executed here",
+      "note": "Low-impact split of tooltip/carousel tests deferred until the runner migration makes test execution possible."
+    }
+  ]
+}

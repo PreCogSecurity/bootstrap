@@ -3,10 +3,9 @@
 [![Slack](https://bootstrap-slack.herokuapp.com/badge.svg)](https://bootstrap-slack.herokuapp.com)
 ![Bower version](https://img.shields.io/bower/v/bootstrap.svg)
 [![npm version](https://img.shields.io/npm/v/bootstrap.svg)](https://www.npmjs.com/package/bootstrap)
-[![Build Status](https://img.shields.io/travis/twbs/bootstrap/master.svg)](https://travis-ci.org/twbs/bootstrap)
-[![devDependency Status](https://img.shields.io/david/dev/twbs/bootstrap.svg)](https://david-dm.org/twbs/bootstrap#info=devDependencies)
+[![CI](https://github.com/PreCogSecurity/bootstrap/actions/workflows/ci.yml/badge.svg)](https://github.com/PreCogSecurity/bootstrap/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/PreCogSecurity/bootstrap/actions/workflows/codeql.yml/badge.svg)](https://github.com/PreCogSecurity/bootstrap/actions/workflows/codeql.yml)
 [![NuGet](https://img.shields.io/nuget/v/bootstrap.svg)](https://www.nuget.org/packages/Bootstrap)
-[![Selenium Test Status](https://saucelabs.com/browser-matrix/bootstrap.svg)](https://saucelabs.com/u/bootstrap)
 
 Bootstrap is a sleek, intuitive, and powerful front-end framework for faster and easier web development, created by [Mark Otto](https://twitter.com/mdo) and [Jacob Thornton](https://twitter.com/fat), and maintained by the [core team](https://github.com/orgs/twbs/people) with the massive support and involvement of the community.
 
@@ -18,7 +17,9 @@ To get started, check out <http://getbootstrap.com>!
 * [Quick start](#quick-start)
 * [Bugs and feature requests](#bugs-and-feature-requests)
 * [Documentation](#documentation)
+* [Architecture](#architecture)
 * [Contributing](#contributing)
+* [Security](#security)
 * [Community](#community)
 * [Versioning](#versioning)
 * [Creators](#creators)
@@ -30,7 +31,7 @@ To get started, check out <http://getbootstrap.com>!
 Several quick start options are available:
 
 * [Download the latest release](https://github.com/twbs/bootstrap/archive/v3.3.6.zip).
-* Clone the repo: `git clone https://github.com/twbs/bootstrap.git`.
+* Clone the repo: `git clone https://github.com/PreCogSecurity/bootstrap.git`.
 * Install with [Bower](http://bower.io): `bower install bootstrap`.
 * Install with [npm](https://www.npmjs.com): `npm install bootstrap@3`.
 * Install with [Meteor](https://www.meteor.com): `meteor add twbs:bootstrap`.
@@ -83,7 +84,7 @@ Bootstrap's documentation, included in this repo in the root directory, is built
 1. If necessary, [install Jekyll](http://jekyllrb.com/docs/installation) and other Ruby dependencies with `bundle install`.
    **Note for Windows users:** Read [this unofficial guide](http://jekyll-windows.juthilo.com/) to get Jekyll up and running without problems.
 2. From the root `/bootstrap` directory, run `bundle exec jekyll serve` in the command line.
-4. Open `http://localhost:9001` in your browser, and voilà.
+3. Open `http://localhost:9001` in your browser, and voilà.
 
 Learn more about using Jekyll by reading its [documentation](http://jekyllrb.com/docs/home/).
 
@@ -96,11 +97,13 @@ Documentation for v2.3.2 has been made available for the time being at <http://g
 
 ## Development
 
-This is a frozen snapshot of Bootstrap v3.3.6, so the toolchain is intentionally
-pinned to the era it was built with. The JavaScript test suite runs on
-[PhantomJS](http://phantomjs.org) via Grunt 0.4.x, which requires Node.js 6
-(see `.nvmrc`); newer Node runtimes are not supported by the legacy build
-dependencies.
+This is a snapshot of Bootstrap v3.3.6, so the build toolchain is pinned to
+Node.js 6, Grunt 0.4.x, and [PhantomJS](http://phantomjs.org) (see `.nvmrc`).
+Newer Node runtimes are not supported by the legacy build dependencies. Moving
+to a maintained runner and a supported Node LTS is planned in
+[MODERNIZATION.md](MODERNIZATION.md); the plan keeps the existing Grunt task
+names and coverage thresholds so the migration can be verified without losing
+test coverage.
 
 ### Prerequisites
 
@@ -111,8 +114,18 @@ dependencies.
 
 ### Install
 
+The Node 6 toolchain installs from the committed shrinkwrap file, which is what
+CI uses for reproducible installs:
+
 ```sh
+cp grunt/npm-shrinkwrap.json npm-shrinkwrap.json
 npm install
+```
+
+On npm 7+ the committed `package-lock.json` can be used instead:
+
+```sh
+npm ci
 ```
 
 ### Test
@@ -121,6 +134,16 @@ Run the full test suite (lint, QUnit unit tests, dist build, docs):
 
 ```sh
 npm test
+```
+
+Focused entry points are available for tooling and contributors:
+
+```sh
+npm run test:unit      # QUnit suite only (js/tests/unit/*.js)
+npm run test:coverage  # lint + QUnit with istanbul coverage thresholds
+npm run test:lint      # JSHint + JSCS
+npm run test:syntax    # dependency-free `node --check` parse gate (any Node)
+npm run build          # dist assets only
 ```
 
 To run only the Node-based subset (lint, QUnit unit tests, dist build, docs
@@ -133,7 +156,8 @@ TWBS_TEST=core npm test
 The QUnit suite lives in `js/tests/` and is driven by `js/tests/index.html`.
 Running the tests also produces an [istanbul](https://istanbul.js.org) coverage
 report in `coverage/` (HTML report plus `coverage-summary.json`). The build
-fails if coverage drops below the thresholds configured in `Gruntfile.js`.
+fails if coverage drops below the thresholds configured in `Gruntfile.js`
+(lines/statements/functions 85%, branches 70%).
 
 ### Lint
 
@@ -146,11 +170,47 @@ npm run lint
 
 ### Dependency audit
 
-This snapshot's devDependencies are from 2016 and contain known
-vulnerabilities (mostly in the legacy Grunt/PhantomJS toolchain). CI runs
-`npm audit` on every push so the baseline stays visible, but the audit is
-informational only and does not gate the build — upgrading the toolchain would
-require a full migration off the 2016-era build system.
+Two layers of protection apply:
+
+* `npm audit --omit=dev --audit-level=high` is a **blocking** CI check, so
+  runtime dependencies can never ship with a high or critical advisory.
+* The frozen 2016 devDependency tree (Grunt/PhantomJS) has a known advisory
+  baseline; CI reports it on every push but does not block on it until the
+  toolchain migration lands. Pull requests that *introduce* a high or critical
+  advisory are blocked by `.github/workflows/dependency-review.yml`, and
+  Dependabot keeps dependencies patched.
+
+See [SECURITY.md](SECURITY.md) for the disclosure policy and known upstream
+advisories.
+
+
+## Architecture
+
+Bootstrap's JavaScript is a set of jQuery plugins. Every file in `js/` follows
+the same shape:
+
+* an IIFE (`+function ($) { 'use strict' ... }(jQuery)`) that keeps the plugin
+  out of the global scope;
+* a constructor (`function Tooltip(element, options)`) that stores the element,
+  merges user options over `DEFAULTS`, and binds events;
+* prototype methods plus a `VERSION` constant;
+* a jQuery bridge (`$.fn.tooltip = function (option) { ... }`) that returns the
+  jQuery collection for chaining;
+* a `noConflict` shim that restores the previous `$.fn.tooltip` value;
+* data-api wiring (`$(document).on('click.bs.tooltip.data-api', ...)`) so
+  `data-*` attributes work without custom JavaScript.
+
+`js/transition.js` provides the `$.support.transition` feature test shared by
+the animation-aware plugins. Plugin events are namespaced (`show.bs.modal`,
+`shown.bs.tooltip`, …) so consumers can safely `off()` them.
+
+The build is a concat pipeline, not a module bundler: `Gruntfile.js`
+(`concat.bootstrap.src`) lists the plugin files in dependency order and
+`grunt/configBridge.json` supplies the jQuery version checks injected into the
+banner. `grunt dist` compiles Less to `dist/css/`, concatenates and minifies the
+plugins to `dist/js/bootstrap.js` / `bootstrap.min.js`, and generates the
+CommonJS entry point (`dist/js/npm.js`). The same pipeline builds `docs/dist/`
+for the Jekyll site.
 
 
 ## Contributing
@@ -162,6 +222,14 @@ Moreover, if your pull request contains JavaScript patches or features, you must
 **Bootstrap v3 is now closed off to new features.** It has gone into maintenance mode so that we can focus our efforts on [Bootstrap v4](https://github.com/twbs/bootstrap/tree/v4-dev), the future of the framework. Pull requests which add new features (rather than fix bugs) should target [Bootstrap v4 (the `v4-dev` git branch)](https://github.com/twbs/bootstrap/tree/v4-dev) instead.
 
 Editor preferences are available in the [editor config](https://github.com/twbs/bootstrap/blob/master/.editorconfig) for easy use in common text editors. Read more and download plugins at <http://editorconfig.org>.
+
+
+## Security
+
+Please report vulnerabilities privately — do not open a public issue. See
+[SECURITY.md](SECURITY.md) for the supported version, the disclosure process,
+and mitigations for known upstream advisories (including the tooltip/popover
+sanitizer work planned in [MODERNIZATION.md](MODERNIZATION.md)).
 
 
 ## Community

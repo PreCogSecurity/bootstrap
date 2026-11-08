@@ -1,0 +1,44 @@
+name: Release artifacts
+
+# Build the distributable bundle on a tag or on demand. This workflow does not
+# publish anywhere: it produces a reviewable artifact for a human maintainer.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    name: Build dist bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 6
+        uses: actions/setup-node@v4
+        with:
+          node-version: 6
+
+      - name: Install dependencies
+        run: |
+          cp grunt/npm-shrinkwrap.json ./npm-shrinkwrap.json
+          npm install --no-audit --no-fund
+
+      - name: Build distribution
+        run: |
+          npm run build
+          ./node_modules/.bin/grunt compress
+
+      - name: Upload distribution bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: bootstrap-dist
+          path: |
+            dist/
+            bootstrap-*-dist.zip
+          if-no-files-found: error

@@ -8,7 +8,9 @@ permalink:        pretty
 # Server
 source:           docs
 destination:      _gh_pages
-host:             0.0.0.0
+# Bind the local docs server to loopback only. Use `jekyll serve --host 0.0.0.0`
+# explicitly if you need to reach it from another machine or a container.
+host:             127.0.0.1
 port:             9001
 url:              http://getbootstrap.com
 encoding:         UTF-8

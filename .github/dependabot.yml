@@ -1,0 +1,45 @@
+version: 2
+
+updates:
+  # Keep the JavaScript toolchain patched. Major upgrades are ignored because
+  # the 2016 Grunt/PhantomJS toolchain needs a coordinated migration; that
+  # work is tracked in MODERNIZATION.md. Minor/patch and security updates
+  # still arrive as pull requests and are gated by dependency-review.yml.
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    versioning-strategy: increase
+    ignore:
+      - dependency-name: "*"
+        update-types:
+          - version-update:semver-major
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+
+  # Ruby/Jekyll docs toolchain.
+  - package-ecosystem: bundler
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+
+  # Composer metadata (no runtime requirements today, but keep the lockfile
+  # fresh if any are added).
+  - package-ecosystem: composer
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+
+  # GitHub Actions used by the workflows above.
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
