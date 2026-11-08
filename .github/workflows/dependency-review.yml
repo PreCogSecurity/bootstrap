@@ -1,0 +1,26 @@
+name: Dependency review
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  dependency-review:
+    name: Review dependency changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      # Fail the pull request when it introduces a high or critical severity
+      # advisory. This complements `npm audit --omit=dev` in ci.yml: the
+      # frozen legacy dev toolchain stays informational, while *new*
+      # vulnerable dependencies are blocked before merge.
+      - name: Dependency review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: on-failure

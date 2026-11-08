@@ -230,7 +230,12 @@ includes code changes) and under the terms of the
 * Push the revised version to your pull request's branch and post a comment on the pull request saying that you've fixed the problem(s). One of the Bootstrap Core Team members will then come along and reopen your pull request.
 * Or you can just open a new pull request for your revised version.
 
-[@twbs-savage](https://github.com/twbs-savage) is a Bootstrap bot that automatically runs cross-browser tests (via [Sauce](https://saucelabs.com) and Travis CI) on JavaScript pull requests. Savage will leave a comment on pull requests stating whether cross-browser JS tests passed or failed, with a link to the full Travis build details. If your pull request fails, check the Travis log to see which browser + OS combinations failed. Each browser test in the Travis log includes a link to a Sauce page with details about the test. On those details pages, you can watch a screencast of the test run to see exactly which unit tests failed.
+This repository runs its checks on GitHub Actions. The `CI` workflow lints the
+JavaScript, runs the QUnit unit suite with coverage thresholds, and builds the
+distribution assets on every pull request (see
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml)). Pull requests that
+introduce a high-severity dependency advisory are blocked by the
+`Dependency review` workflow.
 
 
 ## Code guidelines
@@ -260,7 +265,7 @@ includes code changes) and under the terms of the
 
 ### Checking coding style
 
-Run `grunt test` before committing to ensure your changes follow our coding standards.
+Run `npm test` before committing to ensure your changes follow our coding standards.
 
 
 ## License

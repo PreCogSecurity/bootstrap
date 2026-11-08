@@ -1,0 +1,46 @@
+name: CodeQL
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+  schedule:
+    # Weekly baseline scan so newly published queries catch old code.
+    - cron: '17 3 * * 1'
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze JavaScript
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - javascript-typescript
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-and-quality
+
+      # The JavaScript plugins need no compilation; autobuild keeps the
+      # database extraction step future-proof if a build is ever added.
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
